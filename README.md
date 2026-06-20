@@ -1,6 +1,6 @@
-========================================================================
+======================================
                       HrOne - HR MANAGEMENT SYSTEM                      
-========================================================================
+======================================
 
 An all-in-one, lightweight Human Resource Management System (HRMS) powered 
 by Python, Flask, and SQLite. The application streamlines employee management, 
@@ -54,32 +54,6 @@ mailing framework.
     file uploads up to 100MB. Files exceeding 20MB trigger an alternate workflow 
     that logs a system notice instead of attaching the file directly, preventing 
     outbound server errors.
-
----
-
-## 📂 PROJECT FOLDER STRUCTURE
-
-📂 HrOne
- │   📄 app.py                  # Main Core Application Engine & Endpoint Architecture
- │   💾 database.db             # Generated SQLite Relational Storage Matrix
- │   📝 requirements.txt        # Managed Application Dependency Registry
- ├── 📂 cabin(venv)             # Python Virtual Environment Sandbox Isolated Binaries
- ├── 📂 uploads                 # Local Disk Server Storage Target for Email Attachments
- │    ├── 📸 logo.png           # Enterprise System Asset Branding Identity
- │    └── 🗄️ sql_installer.exe  # Standalone Executable Engine Dependency Tooling
- └── 📂 templates               # Jinja2 Layout Processing Elements
-      ├── 🌐 base.html          # Global Parent Theme Frame and Dependency Asset Links
-      ├── 🌐 home.html          # Central Hub Page rendering Login Interface Modals
-      ├── 🌐 login.html         # Legacy Fallback Interface Authentication Portal View
-      ├── 🌐 admin_dashboard.html # Administrative Identity Operations Dashboard Portal
-      ├── 🌐 user_dashboard.html  # Personalized Employee Workspaces Profile Portal View
-      ├── 🌐 about.html         # Organizational Informational Subpage Layout Element
-      ├── 🌐 contact.html       # Outbound Help Desk Mail Form Interface with File Uploads
-      ├── 🌐 leaves.html        # Central Time-Off Engine Hub Form Matrix View Template
-      ├── 🌐 tasks.html         # Agile Board Drag-Drop Workflow Kanban Screen View
-      ├── 🌐 meetings.html      # Enterprise Synch Interface, Room Engine, & Chat Layout
-
----
 
 ## 🗺️ ENDPOINT ROUTING & FUNCTIONAL PATHS
 
