@@ -1,0 +1,409 @@
+<!-- templates/leaves.html - Complete Leave Management Dashboard -->
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #f8fff8 0%, #e8f5e9 100%);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        height: 100%;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.2s;
+        border: 1px solid #c8e6c9;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    .stat-card i {
+        font-size: 2rem;
+        color: #2e7d32;
+    }
+    .stat-card h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1b5e20;
+        margin: 10px 0 5px;
+    }
+    .stat-card p {
+        color: #666;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    .table-leave th {
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        color: white;
+        font-weight: 600;
+        border: none;
+    }
+    .table-leave td {
+        vertical-align: middle;
+    }
+    .table-leave tbody tr:hover {
+        background: #f1f8e9;
+    }
+    .form-card {
+        background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid #a5d6a7;
+    }
+    .form-card .form-control, .form-card .form-select {
+        border: 1px solid #81c784;
+        border-radius: 10px;
+    }
+    .form-card .form-control:focus, .form-card .form-select:focus {
+        border-color: #2e7d32;
+        box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+    }
+    .badge-status {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .badge-status.pending {
+        background: #fff3e0;
+        color: #e65100;
+    }
+    .badge-status.approved {
+        background: #e8f5e9;
+        color: #1b5e20;
+    }
+    .badge-status.rejected {
+        background: #fce4ec;
+        color: #c62828;
+    }
+    .leave-balance-badge {
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    .btn-approve {
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        border: none;
+        color: white;
+        border-radius: 8px;
+        padding: 5px 15px;
+        transition: all 0.2s;
+    }
+    .btn-approve:hover {
+        background: linear-gradient(135deg, #1b5e20 0%, #0d3b0e 100%);
+        transform: scale(1.05);
+        color: white;
+    }
+    .btn-reject {
+        background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+        border: none;
+        color: white;
+        border-radius: 8px;
+        padding: 5px 15px;
+        transition: all 0.2s;
+    }
+    .btn-reject:hover {
+        background: linear-gradient(135deg, #b71c1c 0%, #7f0000 100%);
+        transform: scale(1.05);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="text-success fw-bold">
+            <i class="fas fa-calendar-check me-2"></i>{{ target_heading }}
+        </h2>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if session.role == 'Employee' %}
+                <span class="leave-balance-badge">
+                    <i class="fas fa-coins me-2"></i>Balance: {{ user.leave_balance }} days
+                </span>
+            {% endif %}
+            {% if session.role in ['Admin', 'Manager'] %}
+                <span class="leave-balance-badge" style="background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);">
+                    <i class="fas fa-clock me-2"></i>Pending: {{ pending_count }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, msg in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                    {{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <!-- Left Column - Leave Application Form (Employees Only) -->
+        <div class="col-lg-4 mb-4">
+            {% if session.role == 'Employee' %}
+            <div class="form-card">
+                <h5 class="text-success fw-bold mb-3">
+                    <i class="fas fa-paper-plane me-2"></i>Apply for Leave
+                </h5>
+                <hr>
+                <form action="{{ url_for('request_leave') }}" method="POST" id="leaveForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Start Date <span class="text-danger">*</span></label>
+                        <input type="date" name="start_date" id="start_date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">End Date <span class="text-danger">*</span></label>
+                        <input type="date" name="end_date" id="end_date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Reason <span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control" rows="3" 
+                                  placeholder="Enter reason for leave..." required></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success text-white fw-bold py-2" 
+                                style="background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); border:none; border-radius:10px;">
+                            <i class="fas fa-check-circle me-2"></i>Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Quick Stats Card -->
+            <div class="card shadow-sm mt-4 border-0">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <i class="fas fa-inbox"></i>
+                                <h2>{{ leave_requests|length }}</h2>
+                                <p>Total Requests</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);">
+                                <i class="fas fa-clock" style="color: #f57c00;"></i>
+                                <h2 style="color: #e65100;">{{ leave_requests|selectattr('status', 'equalto', 'Pending')|list|length }}</h2>
+                                <p>Pending</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);">
+                                <i class="fas fa-check-circle" style="color: #2e7d32;"></i>
+                                <h2 style="color: #1b5e20;">{{ leave_requests|selectattr('status', 'equalto', 'Approved')|list|length }}</h2>
+                                <p>Approved</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);">
+                                <i class="fas fa-times-circle" style="color: #c62828;"></i>
+                                <h2 style="color: #c62828;">{{ leave_requests|selectattr('status', 'equalto', 'Rejected')|list|length }}</h2>
+                                <p>Rejected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Leave Requests Table -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-alt me-2"></i>
+                        {% if session.role in ['Admin', 'Manager'] %}
+                            All Leave Requests
+                        {% else %}
+                            Your Leave History
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if leave_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-leave table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    {% if session.role in ['Admin', 'Manager'] %}
+                                        <th>Employee</th>
+                                    {% endif %}
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Days</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Applied</th>
+                                    {% if session.role in ['Admin', 'Manager'] %}
+                                        <th>Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in leave_requests %}
+                                <tr>
+                                    {% if session.role in ['Admin', 'Manager'] %}
+                                        <td><strong>{{ req.employee_name }}</strong></td>
+                                    {% endif %}
+                                    <td>{{ req.start_date }}</td>
+                                    <td>{{ req.end_date }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ req.duration if req.duration else '—' }}</span>
+                                    </td>
+                                    <td>{{ req.reason|truncate(25) }}</td>
+                                    <td>
+                                        <span class="badge-status {% if req.status == 'Pending' %}pending{% elif req.status == 'Approved' %}approved{% else %}rejected{% endif %}">
+                                            <i class="fas {% if req.status == 'Pending' %}fa-clock{% elif req.status == 'Approved' %}fa-check-circle{% else %}fa-times-circle{% endif %} me-1"></i>
+                                            {{ req.status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ req.created_at[:10] if req.created_at else '—' }}</td>
+                                    {% if session.role in ['Admin', 'Manager'] and req.status == 'Pending' %}
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ url_for('action_leave', request_id=req.id, action='approve') }}" 
+                                                   class="btn btn-approve" title="Approve">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                                <a href="{{ url_for('action_leave', request_id=req.id, action='reject') }}" 
+                                                   class="btn btn-reject" title="Reject">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    {% elif session.role in ['Admin', 'Manager'] %}
+                                        <td>—</td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-4x text-muted mb-3 d-block"></i>
+                            <h5 class="text-muted">No leave requests found</h5>
+                            <p class="text-muted">{% if session.role == 'Employee' %}Apply for leave using the form on the left.{% endif %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pending Requests Section (Admin/Manager Only) -->
+            {% if session.role in ['Admin', 'Manager'] and pending_requests %}
+            <div class="card shadow-sm mt-4 border-warning border-2">
+                <div class="card-header" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);">
+                    <h5 class="mb-0 text-warning-dark">
+                        <i class="fas fa-clock me-2"></i>Pending Requests ({{ pending_requests|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Dates</th>
+                                    <th>Duration</th>
+                                    <th>Reason</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in pending_requests %}
+                                <tr>
+                                    <td><strong>{{ req.employee_name }}</strong></td>
+                                    <td>{{ req.start_date }} → {{ req.end_date }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ req.duration if req.duration else '—' }} days</span>
+                                    </td>
+                                    <td>{{ req.reason|truncate(30) }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('action_leave', request_id=req.id, action='approve') }}" 
+                                               class="btn btn-approve">
+                                                <i class="fas fa-check me-1"></i> Approve
+                                            </a>
+                                            <a href="{{ url_for('action_leave', request_id=req.id, action='reject') }}" 
+                                               class="btn btn-reject">
+                                                <i class="fas fa-times me-1"></i> Reject
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Date Validation -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    if (!startDateInput) return;
+
+    // 1. Disable Backdates (Block past calendar dates)
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.min = today;
+    endDateInput.min = today;
+
+    // 2. Chronological Calendar Bounds Adjustment
+    startDateInput.addEventListener('change', function() {
+        endDateInput.min = startDateInput.value;
+        if(endDateInput.value && endDateInput.value < startDateInput.value) {
+            endDateInput.value = startDateInput.value;
+        }
+    });
+
+    // 3. Collect existing booked periods to detect overlaps
+    const takenDates = [
+        {% for req in leave_requests %}
+            {% if req.status in ['Pending', 'Approved'] %}
+                { start: "{{ req.start_date }}", end: "{{ req.end_date }}" },
+            {% endif %}
+        {% endfor %}
+    ];
+
+    // 4. Form Interception for Duplicate Date Range Block validation
+    const leaveForm = document.getElementById('leaveForm');
+    if (leaveForm) {
+        leaveForm.addEventListener('submit', function(e) {
+            const selectedStart = startDateInput.value;
+            const selectedEnd = endDateInput.value;
+
+            for (let period of takenDates) {
+                if (selectedStart <= period.end && selectedEnd >= period.start) {
+                    alert(`❌ Error: You have already applied for leave inside the date range (${period.start} to ${period.end}). Please change your selections.`);
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

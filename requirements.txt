@@ -1,0 +1,7 @@
+Flask==2.3.3
+Flask-SocketIO==5.3.4
+Flask-Mail==0.9.1
+Flask-WTF==1.1.1
+WTForms==3.0.1
+Werkzeug==2.3.7
+python-socketio==5.9.0
