@@ -1,6 +1,7 @@
-=========
+========================================================================
+                     
                       HrOne - HR MANAGEMENT SYSTEM                      
-
+========================================================================
 
 An all-in-one, lightweight Human Resource Management System (HRMS) powered 
 by Python, Flask, and SQLite. The application streamlines employee management, 
